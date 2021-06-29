@@ -67,6 +67,11 @@ serviceStatusID	tinyint		NOT NULL,
 DODaffID		tinyint		NOT NULL
 )
 
+CREATE TABLE ReservationStatus
+(
+
+)
+
 --CONSTRAINTS BELOW HERE
 
 GO
