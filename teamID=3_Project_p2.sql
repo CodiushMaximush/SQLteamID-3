@@ -67,14 +67,97 @@ serviceStatusID	tinyint		NOT NULL,
 DODaffID		tinyint		NOT NULL
 )
 
-CREATE TABLE ReservationStatus
+CREATE TABLE Payment
 (
-
+paymentID		int				NOT NULL	IDENTITY,
+amountPaid		decimal(15,2)	NOT NULL,
+datePaid		datetime		NOT NULL,
+paymentReason	varchar(25)		NOT NULL,
+paymentTypeID	tinyint			NOT NULL,
+reservationID	int
 )
+
+CREATE TABLE PaymentType
+(
+typeID			tinyint		NOT NULL	IDENTITY,
+typeName		varchar(15)	NOT NULL
+)
+
+CREATE TABLE Reservation
+(
+reservationID		int			NOT NULL	IDENTITY,
+startDate			datetime	NOT NULL,
+endDate				datetime	NOT NULL,
+reservationDate		datetime	NOT NULL,
+numAdults			tinyint		NOT NULL,
+numChildren			tinyint		NOT NULL,
+licensePlate		varchar(10)	NOT NULL,
+vehicleType			varchar(20)	NOT NULL,
+vehicleLength		tinyint		NOT NULL,
+restrictedPets		bit			NOT NULL,
+numPets				tinyint		NOT NULL,
+reservationStatusID	tinyint		NOT NULL,
+lotID				tinyint		NOT NULL,
+primaryResdientID	int			NOT NULL,
+vehicleID			int			NOT NULL
+)
+
+CREATE TABLE SpecialEvent
+(
+eventID			int				NOT NULL	IDENTITY,
+eventName		varChar(20)		NOT NULL,
+eventStartDate	dateTime		NOT NULL,
+eventEndDate	dateTime		NOT NULL,
+locID			tinyint			NOT NULL
+)
+
+CREATE TABLE Location
+(
+locID			tinyint			NOT NULL	IDENTITY,
+locationName	varChar(15)		NOT NULL,
+locationAddress	varChar(40)		NOT NULL,
+locZIP			varChar(10)		NOT NULL,
+locCity			varChar(30)		NOT NULL,
+locState		varChar(15)		NOT NULL,
+)
+
+CREATE TABLE Lot
+(
+lotID		tinyint			NOT NULL	IDENTITY,
+lotName		varChar(5)		NOT NULL,
+lotLength	tinyint			NOT NULL,
+categoryID	tinyint			NOT NULL,
+locId		tinyint			NOT NULL,
+)
+
+CREATE TABLE LotCategory
+(
+categoryID	tinyint			NOT NULL	IDENTITY,
+catName		varChar(15)		NOT NULL,
+rateID		tinyint			NOT NULL,
+)
+
 
 --CONSTRAINTS BELOW HERE
 
 GO
+-- Primary Key Constraints
+ALTER TABLE SpecialEvent
+	ADD CONSTRAINT PK_eventID
+	PRIMARY KEY (eventID)
+
+ALTER TABLE Location
+	ADD CONSTRAINT PK_locID
+	PRIMARY KEY (locID)
+
+ALTER TABLE Lot
+	ADD CONSTRAINT PK_lotID
+	PRIMARY KEY (lotID)
+
+ALTER TABLE LotCategory
+	ADD CONSTRAINT PK_categoryID
+	PRIMARY KEY (categoryID)
+
 ALTER TABLE ServiceStatus
 	ADD CONSTRAINT PK_statusID
 	PRIMARY KEY (statusID)
@@ -90,6 +173,7 @@ ALTER TABLE DODAffiliation
 ALTER TABLE Residents
 	ADD CONSTRAINT PK_residentID
 	PRIMARY KEY (residentID)
+
 
 ALTER TABLE Residents
 	ADD CONSTRAINT FK_serviceStatusID
@@ -116,6 +200,60 @@ ALTER TABLE Answer
 ALTER TABLE Answer
 	ADD CONSTRAINT FK_residentID
 	FOREIGN KEY (residentID) REFERENCES Residents (residentID)
+
+ALTER TABLE PaymentType
+	ADD CONSTRAINT PK_typeID
+	PRIMARY KEY (typeID)
+
+ALTER TABLE Payment
+	ADD CONSTRAINT PK_paymentID
+	PRIMARY KEY (paymentID)
+
+ALTER TABLE Payment
+	ADD CONSTRAINT FK_paymentTypeID
+	FOREIGN KEY (paymentTypeID) REFERENCES PaymentType (typeID)
+	ON UPDATE CASCADE
+	ON DELETE NO ACTION
+
+ALTER TABLE Reservation
+	ADD CONSTRAINT PK_reservationID
+	PRIMARY KEY (reservationID)
+
+ALTER TABLE Reservation
+	ADD CONSTRAINT FK_reservationStatusID
+	FOREIGN KEY (reservationStatusID) REFERENCES ReservationStatus (reservationStatusID)
+	ON UPDATE CASCADE
+	ON DELETE NO ACTION
+
+ALTER TABLE Reservation
+	ADD CONSTRAINT FK_lotID
+	FOREIGN KEY (lotID) REFERENCES Lot (lotID)
+	ON UPDATE CASCADE
+	ON DELETE NO ACTION
+
+ALTER TABLE Reservation
+	ADD CONSTRAINT FK_primaryResidentID
+	FOREIGN KEY (primaryResidentID) REFERENCES Resident (residentID)
+	ON UPDATE CASCADE
+	ON DELETE NO ACTION
+
+ALTER TABLE Reservation
+	ADD CONSTRAINT FK_vehicleID
+	FOREIGN KEY (FK_vehicleID) REFERENCES VehicleType (vehicleID)
+	ON UPDATE CASCADE
+	ON DELETE NO ACTION
+
+ALTER TABLE Reservation 
+	ADD CONSTRAINT CK_vehicleLength
+	CHECK (vehicleLength BETWEEN 0 AND 50)
+
+ALTER TABLE Reservation 
+	ADD CONSTRAINT CK_numPets
+	CHECK (numPets BETWEEN 0 AND 2)
+
+ALTER TABLE Reservation
+	ADD CONSTRAINT DK_reservationDate
+	DEFAULT GETDATE() FOR reservationDate
 
 --ADD SAMPLE DATA BELOW
 GO
