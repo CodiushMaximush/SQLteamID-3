@@ -8,6 +8,7 @@ GO
 
 CREATE DATABASE RVPark
 
+/*
 ON PRIMARY
 (
 	NAME = 'RVPark',
@@ -25,7 +26,7 @@ LOG ON
 	MAXSIZE = 50MB,
 	FILEGROWTH = 10% --smaller size assuming assignments are not constantly created and changed
 )
-
+*/
 GO
 USE RVPark
 
@@ -136,7 +137,21 @@ categoryID	tinyint			NOT NULL	IDENTITY,
 catName		varChar(15)		NOT NULL,
 rateID		tinyint			NOT NULL,
 )
-
+CREATE TABLE RateCategory(
+rateID			tinyInt			NOT NULL	IDENTITY,
+rate			smallMoney		NOT NULL,
+rateStartDate	dateTime		NOT NULL, 
+rateEndDate		dateTime		NOT NULL
+)
+CREATE TABLE ReservationStatus(
+statusID			tinyInt			NOT NULL	IDENTITY,
+statusName			varChar(15)		NOT NULL,
+statusDescription	varChar(max)	NOT NULL	
+)
+CREATE TABLE VehicleType(
+vehicleID			int				NOT NULL	IDENTITY,
+vehicleDescription  varChar(50)		NOT NULL
+)
 
 --CONSTRAINTS BELOW HERE
 
