@@ -8,6 +8,7 @@ GO
 
 CREATE DATABASE RVPark
 
+--I'm pretty sure this part is optional and hard to maintain across multiple machines
 /*
 ON PRIMARY
 (
@@ -55,7 +56,7 @@ residentID		int			NOT NULL,
 answer			varchar(20)	NOT NULL
 )
 
-CREATE TABLE Residents
+CREATE TABLE Resident
 (
 residentID		int			NOT NULL	IDENTITY,
 firstName		varchar(20)	NOT NULL,
@@ -99,7 +100,7 @@ restrictedPets		bit			NOT NULL,
 numPets				tinyint		NOT NULL,
 reservationStatusID	tinyint		NOT NULL,
 lotID				tinyint		NOT NULL,
-primaryResdientID	int			NOT NULL,
+primaryResidentID	int			NOT NULL,
 vehicleID			int			NOT NULL
 )
 
@@ -137,17 +138,20 @@ categoryID	tinyint			NOT NULL	IDENTITY,
 catName		varChar(15)		NOT NULL,
 rateID		tinyint			NOT NULL,
 )
+
 CREATE TABLE RateCategory(
 rateID			tinyInt			NOT NULL	IDENTITY,
 rate			smallMoney		NOT NULL,
 rateStartDate	dateTime		NOT NULL, 
 rateEndDate		dateTime		NOT NULL
 )
+
 CREATE TABLE ReservationStatus(
-statusID			tinyInt			NOT NULL	IDENTITY,
+reservationStatusID			tinyInt			NOT NULL	IDENTITY,
 statusName			varChar(15)		NOT NULL,
 statusDescription	varChar(max)	NOT NULL	
 )
+
 CREATE TABLE VehicleType(
 vehicleID			int				NOT NULL	IDENTITY,
 vehicleDescription  varChar(50)		NOT NULL
@@ -185,36 +189,21 @@ ALTER TABLE DODAffiliation
 	ADD CONSTRAINT PK_DODaffID
 	PRIMARY KEY (DODaffID)
 
-ALTER TABLE Residents
+ALTER TABLE Resident
 	ADD CONSTRAINT PK_residentID
 	PRIMARY KEY (residentID)
 
-
-ALTER TABLE Residents
-	ADD CONSTRAINT FK_serviceStatusID
-	FOREIGN KEY (serviceStatusID) REFERENCES ServiceStatus (statusID)
-	ON UPDATE CASCADE
-	ON DELETE CASCADE
-
-ALTER TABLE Residents
-	ADD CONSTRAINT FK_DODaffID
-	FOREIGN KEY (DODaffID) REFERENCES DODAffiliation (DODaffID)
-	ON UPDATE CASCADE
-	ON DELETE CASCADE
-
 ALTER TABLE Answer
-	ADD CONSTRAINT PK_questionID_residentID
+	ADD CONSTRAINT PK_answer
 	PRIMARY KEY (questionID, residentID)
 
-ALTER TABLE Answer
-	ADD CONSTRAINT FK_questionID
-	FOREIGN KEY (questionID) REFERENCES SecurityQuestion (questionID)
-	ON UPDATE CASCADE
-	ON DELETE CASCADE
+ALTER TABLE RateCategory
+	ADD CONSTRAINT PK_rateCategory 
+	PRIMARY KEY(rateID)
 
-ALTER TABLE Answer
-	ADD CONSTRAINT FK_residentID
-	FOREIGN KEY (residentID) REFERENCES Residents (residentID)
+ALTER TABLE ReservationStatus
+	ADD CONSTRAINT PK_reservationStatus 
+	PRIMARY KEY(reservationStatusID)
 
 ALTER TABLE PaymentType
 	ADD CONSTRAINT PK_typeID
@@ -224,15 +213,70 @@ ALTER TABLE Payment
 	ADD CONSTRAINT PK_paymentID
 	PRIMARY KEY (paymentID)
 
+ALTER TABLE Reservation
+	ADD CONSTRAINT PK_reservationID
+	PRIMARY KEY (reservationID)
+
+
+--Add Foreign Key Constraints
+
+ALTER TABLE Answer
+	ADD CONSTRAINT FK_questionID
+	FOREIGN KEY (questionID) REFERENCES SecurityQuestion (questionID)
+	ON UPDATE CASCADE
+	ON DELETE CASCADE
+
+ALTER TABLE Answer
+	ADD CONSTRAINT FK_residentID
+	FOREIGN KEY (residentID) REFERENCES Resident (residentID)
+	ON UPDATE CASCADE
+	ON DELETE CASCADE
+
+ALTER TABLE SpecialEvent
+	ADD CONSTRAINT FK_locID
+	FOREIGN KEY (locID) REFERENCES Location (locID)
+	ON UPDATE CASCADE
+	ON DELETE CASCADE
+
+ALTER TABLE LotCategory
+	ADD CONSTRAINT FK_rateID
+	FOREIGN KEY (rateID) REFERENCES RateCategory (rateID)
+	ON UPDATE CASCADE
+	ON DELETE CASCADE
+
+ALTER TABLE Lot
+	ADD CONSTRAINT FK_categoryID
+	FOREIGN KEY (categoryID) REFERENCES LotCategory (categoryID)
+	ON UPDATE CASCADE
+	ON DELETE CASCADE
+
+ALTER TABLE Lot
+	ADD CONSTRAINT FK_locID
+	FOREIGN KEY (locID) REFERENCES Location (locID)
+	ON UPDATE CASCADE
+	ON DELETE CASCADE
+
+ALTER TABLE Resident
+	ADD CONSTRAINT FK_serviceStatusID
+	FOREIGN KEY (serviceStatusID) REFERENCES ServiceStatus (statusID)
+	ON UPDATE CASCADE
+	ON DELETE CASCADE
+
+ALTER TABLE Resident
+	ADD CONSTRAINT FK_DODaffID
+	FOREIGN KEY (DODaffID) REFERENCES DODAffiliation (DODaffID)
+	ON UPDATE CASCADE
+	ON DELETE CASCADE
+
+
+
+
 ALTER TABLE Payment
 	ADD CONSTRAINT FK_paymentTypeID
 	FOREIGN KEY (paymentTypeID) REFERENCES PaymentType (typeID)
 	ON UPDATE CASCADE
 	ON DELETE NO ACTION
 
-ALTER TABLE Reservation
-	ADD CONSTRAINT PK_reservationID
-	PRIMARY KEY (reservationID)
 
 ALTER TABLE Reservation
 	ADD CONSTRAINT FK_reservationStatusID
@@ -252,12 +296,17 @@ ALTER TABLE Reservation
 	ON UPDATE CASCADE
 	ON DELETE NO ACTION
 
+--TODO: This FK constraint is broken and I don't know why
+/*
 ALTER TABLE Reservation
 	ADD CONSTRAINT FK_vehicleID
-	FOREIGN KEY (FK_vehicleID) REFERENCES VehicleType (vehicleID)
+	FOREIGN KEY (vehicleID) REFERENCES VehicleType (vehicleID)
 	ON UPDATE CASCADE
 	ON DELETE NO ACTION
+*/
 
+
+-- Add CK's
 ALTER TABLE Reservation 
 	ADD CONSTRAINT CK_vehicleLength
 	CHECK (vehicleLength BETWEEN 0 AND 50)
@@ -266,9 +315,15 @@ ALTER TABLE Reservation
 	ADD CONSTRAINT CK_numPets
 	CHECK (numPets BETWEEN 0 AND 2)
 
+-- Add DK's
+
+
+
 ALTER TABLE Reservation
 	ADD CONSTRAINT DK_reservationDate
 	DEFAULT GETDATE() FOR reservationDate
+
+
 
 --ADD SAMPLE DATA BELOW
 GO
