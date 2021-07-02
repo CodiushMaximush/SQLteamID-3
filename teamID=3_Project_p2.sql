@@ -217,6 +217,10 @@ ALTER TABLE Reservation
 	ADD CONSTRAINT PK_reservationID
 	PRIMARY KEY (reservationID)
 
+ALTER TABLE VehicleType
+	ADD CONSTRAINT  PK_vehicleID
+	PRIMARY KEY (vehicleID)
+
 
 --Add Foreign Key Constraints
 
@@ -233,7 +237,7 @@ ALTER TABLE Answer
 	ON DELETE CASCADE
 
 ALTER TABLE SpecialEvent
-	ADD CONSTRAINT FK_locID
+	ADD CONSTRAINT FK_SElocID
 	FOREIGN KEY (locID) REFERENCES Location (locID)
 	ON UPDATE CASCADE
 	ON DELETE CASCADE
@@ -296,14 +300,12 @@ ALTER TABLE Reservation
 	ON UPDATE CASCADE
 	ON DELETE NO ACTION
 
---TODO: This FK constraint is broken and I don't know why
-/*
 ALTER TABLE Reservation
 	ADD CONSTRAINT FK_vehicleID
 	FOREIGN KEY (vehicleID) REFERENCES VehicleType (vehicleID)
 	ON UPDATE CASCADE
 	ON DELETE NO ACTION
-*/
+
 
 
 -- Add CK's
@@ -327,3 +329,33 @@ ALTER TABLE Reservation
 
 --ADD SAMPLE DATA BELOW
 GO
+INSERT INTO SecurityQuestion
+VALUES  ('In what city or town was your first job?'),
+		('What was the name of your childhood pet?'),
+		('What street did you live on in third grade?'),
+		('What was your childhood nickname?'),
+		('What is your oldest siblings middle name?')
+
+INSERT INTO ServiceStatus
+VALUES	('Active'),
+		('Retired'),
+		('Reserves'),
+		('PCS')
+
+INSERT INTO DODAffiliation
+VALUES	('Army'),
+		('AF'),
+		('Navy'),
+		('Marines'),
+		('Coast Guard'),
+		('Space Force') --Because why not
+
+INSERT INTO Resident
+VALUES	('Mark', 'Lee', '801-598-1814', 'marklee@gmail.com', 'markflee', 'X&90g3wraRuna$avE6rl', 3, 3),
+		('Jenna', 'Valencia', '435-468-1896', 'jennaval@yahoo.com', 'jvalencia', '8ok*q1VA70BOw@Haw-ah', 1, 1),
+		('Leonie', 'Guerrero', '801-789-1567', 'liongorilla1559@gmail.com', 'leoniegue', '_8_zlrLXOspus', 1, 6)
+
+INSERT INTO Answer
+VALUES	(2, 1, 'Apache'),
+		(3, 2, 'Samual Street'),
+		(5, 3, 'Cameron')
