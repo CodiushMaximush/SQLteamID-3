@@ -8,6 +8,8 @@ GO
 
 CREATE DATABASE RVPark
 
+--I'm pretty sure this part is optional and hard to maintain across multiple machines
+/*
 ON PRIMARY
 (
 	NAME = 'RVPark',
@@ -16,7 +18,6 @@ ON PRIMARY
 	MAXSIZE = 500MB,
 	FILEGROWTH = 10%
 )
-
 LOG ON 
 (
 	NAME = 'RVPark_Log',
@@ -25,7 +26,7 @@ LOG ON
 	MAXSIZE = 50MB,
 	FILEGROWTH = 10% --smaller size assuming assignments are not constantly created and changed
 )
-
+*/
 GO
 USE RVPark
 
@@ -54,7 +55,7 @@ residentID		int			NOT NULL,
 answer			varchar(20)	NOT NULL
 )
 
-CREATE TABLE Residents
+CREATE TABLE Resident
 (
 residentID		int			NOT NULL	IDENTITY,
 firstName		varchar(20)	NOT NULL,
@@ -98,7 +99,7 @@ restrictedPets		bit			NOT NULL,
 numPets				tinyint		NOT NULL,
 reservationStatusID	tinyint		NOT NULL,
 lotID				tinyint		NOT NULL,
-primaryResdientID	int			NOT NULL,
+primaryResidentID	int			NOT NULL,
 vehicleID			int			NOT NULL
 )
 
@@ -137,6 +138,23 @@ catName		varChar(15)		NOT NULL,
 rateID		tinyint			NOT NULL,
 )
 
+CREATE TABLE RateCategory(
+rateID			tinyInt			NOT NULL	IDENTITY,
+rate			smallMoney		NOT NULL,
+rateStartDate	dateTime		NOT NULL, 
+rateEndDate		dateTime		NOT NULL
+)
+
+CREATE TABLE ReservationStatus(
+reservationStatusID			tinyInt			NOT NULL	IDENTITY,
+statusName					varChar(15)		NOT NULL,
+statusDescription			varChar(max)	NOT NULL	
+)
+
+CREATE TABLE VehicleType(
+vehicleID			int				NOT NULL	IDENTITY,
+vehicleDescription  varChar(50)		NOT NULL
+)
 
 --CONSTRAINTS BELOW HERE
 
@@ -170,22 +188,21 @@ ALTER TABLE DODAffiliation
 	ADD CONSTRAINT PK_DODaffID
 	PRIMARY KEY (DODaffID)
 
-ALTER TABLE Residents
+ALTER TABLE Resident
 	ADD CONSTRAINT PK_residentID
 	PRIMARY KEY (residentID)
 
+ALTER TABLE Answer
+	ADD CONSTRAINT PK_answer
+	PRIMARY KEY (questionID, residentID)
 
-ALTER TABLE Residents
-	ADD CONSTRAINT FK_serviceStatusID
-	FOREIGN KEY (serviceStatusID) REFERENCES ServiceStatus (statusID)
-	ON UPDATE CASCADE
-	ON DELETE CASCADE
+ALTER TABLE RateCategory
+	ADD CONSTRAINT PK_rateCategory 
+	PRIMARY KEY(rateID)
 
-ALTER TABLE Residents
-	ADD CONSTRAINT FK_DODaffID
-	FOREIGN KEY (DODaffID) REFERENCES DODAffiliation (DODaffID)
-	ON UPDATE CASCADE
-	ON DELETE CASCADE
+ALTER TABLE ReservationStatus
+	ADD CONSTRAINT PK_reservationStatus 
+	PRIMARY KEY(reservationStatusID)
 
 ALTER TABLE SpecialEvent
 	ADD CONSTRAINT FK_locID
@@ -214,6 +231,25 @@ ALTER TABLE Lot
 ALTER TABLE Answer
 	ADD CONSTRAINT PK_questionID_residentID
 	PRIMARY KEY (questionID, residentID)
+=======
+ALTER TABLE PaymentType
+	ADD CONSTRAINT PK_typeID
+	PRIMARY KEY (typeID)
+
+ALTER TABLE Payment
+	ADD CONSTRAINT PK_paymentID
+	PRIMARY KEY (paymentID)
+
+ALTER TABLE Reservation
+	ADD CONSTRAINT PK_reservationID
+	PRIMARY KEY (reservationID)
+
+ALTER TABLE VehicleType
+	ADD CONSTRAINT  PK_vehicleID
+	PRIMARY KEY (vehicleID)
+
+
+--Add Foreign Key Constraints
 
 ALTER TABLE Answer
 	ADD CONSTRAINT FK_questionID
@@ -223,50 +259,83 @@ ALTER TABLE Answer
 
 ALTER TABLE Answer
 	ADD CONSTRAINT FK_residentID
-	FOREIGN KEY (residentID) REFERENCES Residents (residentID)
+	FOREIGN KEY (residentID) REFERENCES Resident (residentID)
+	ON UPDATE CASCADE
+	ON DELETE CASCADE
 
-ALTER TABLE PaymentType
-	ADD CONSTRAINT PK_typeID
-	PRIMARY KEY (typeID)
+ALTER TABLE SpecialEvent
+	ADD CONSTRAINT FK_SElocID
+	FOREIGN KEY (locID) REFERENCES Location (locID)
+	ON UPDATE CASCADE
+	ON DELETE CASCADE
 
-ALTER TABLE Payment
-	ADD CONSTRAINT PK_paymentID
-	PRIMARY KEY (paymentID)
+ALTER TABLE LotCategory
+	ADD CONSTRAINT FK_rateID
+	FOREIGN KEY (rateID) REFERENCES RateCategory (rateID)
+	ON UPDATE CASCADE
+	ON DELETE CASCADE
+
+ALTER TABLE Lot
+	ADD CONSTRAINT FK_categoryID
+	FOREIGN KEY (categoryID) REFERENCES LotCategory (categoryID)
+	ON UPDATE CASCADE
+	ON DELETE CASCADE
+
+ALTER TABLE Lot
+	ADD CONSTRAINT FK_locID
+	FOREIGN KEY (locID) REFERENCES Location (locID)
+	ON UPDATE CASCADE
+	ON DELETE CASCADE
+
+ALTER TABLE Resident
+	ADD CONSTRAINT FK_serviceStatusID
+	FOREIGN KEY (serviceStatusID) REFERENCES ServiceStatus (statusID)
+	ON UPDATE CASCADE
+	ON DELETE CASCADE
+
+ALTER TABLE Resident
+	ADD CONSTRAINT FK_DODaffID
+	FOREIGN KEY (DODaffID) REFERENCES DODAffiliation (DODaffID)
+	ON UPDATE CASCADE
+	ON DELETE CASCADE
+
+
+
 
 ALTER TABLE Payment
 	ADD CONSTRAINT FK_paymentTypeID
 	FOREIGN KEY (paymentTypeID) REFERENCES PaymentType (typeID)
 	ON UPDATE CASCADE
-	ON DELETE NO ACTION
+	ON DELETE CASCADE
 
-ALTER TABLE Reservation
-	ADD CONSTRAINT PK_reservationID
-	PRIMARY KEY (reservationID)
 
 ALTER TABLE Reservation
 	ADD CONSTRAINT FK_reservationStatusID
 	FOREIGN KEY (reservationStatusID) REFERENCES ReservationStatus (reservationStatusID)
 	ON UPDATE CASCADE
-	ON DELETE NO ACTION
+	ON DELETE CASCADE
 
 ALTER TABLE Reservation
 	ADD CONSTRAINT FK_lotID
 	FOREIGN KEY (lotID) REFERENCES Lot (lotID)
 	ON UPDATE CASCADE
-	ON DELETE NO ACTION
+	ON DELETE CASCADE
 
 ALTER TABLE Reservation
 	ADD CONSTRAINT FK_primaryResidentID
 	FOREIGN KEY (primaryResidentID) REFERENCES Resident (residentID)
 	ON UPDATE CASCADE
-	ON DELETE NO ACTION
+	ON DELETE CASCADE
 
 ALTER TABLE Reservation
 	ADD CONSTRAINT FK_vehicleID
-	FOREIGN KEY (FK_vehicleID) REFERENCES VehicleType (vehicleID)
+	FOREIGN KEY (vehicleID) REFERENCES VehicleType (vehicleID)
 	ON UPDATE CASCADE
-	ON DELETE NO ACTION
+	ON DELETE CASCADE
 
+
+
+-- Add CK's
 ALTER TABLE Reservation 
 	ADD CONSTRAINT CK_vehicleLength
 	CHECK (vehicleLength BETWEEN 0 AND 50)
@@ -275,9 +344,70 @@ ALTER TABLE Reservation
 	ADD CONSTRAINT CK_numPets
 	CHECK (numPets BETWEEN 0 AND 2)
 
+-- Add DK's
+
+
+
 ALTER TABLE Reservation
 	ADD CONSTRAINT DK_reservationDate
 	DEFAULT GETDATE() FOR reservationDate
 
+
+
 --ADD SAMPLE DATA BELOW
 GO
+INSERT INTO SecurityQuestion
+VALUES  ('In what city or town was your first job?'),
+		('What was the name of your childhood pet?'),
+		('What street did you live on in third grade?'),
+		('What was your childhood nickname?'),
+		('What is your oldest siblings middle name?')
+
+INSERT INTO ServiceStatus
+VALUES	('Active'),
+		('Retired'),
+		('Reserves'),
+		('PCS')
+
+INSERT INTO DODAffiliation
+VALUES	('Army'),
+		('AF'),
+		('Navy'),
+		('Marines'),
+		('Coast Guard'),
+		('Space Force') --Because why not
+
+INSERT INTO Resident
+VALUES	('Mark', 'Lee', '801-598-1814', 'marklee@gmail.com', 'markflee', 'X&90g3wraRuna$avE6rl', 3, 3),
+		('Jenna', 'Valencia', '435-468-1896', 'jennaval@yahoo.com', 'jvalencia', '8ok*q1VA70BOw@Haw-ah', 1, 1),
+		('Leonie', 'Guerrero', '801-789-1567', 'liongorilla1559@gmail.com', 'leoniegue', '_8_zlrLXOspus', 1, 6)
+
+
+INSERT INTO Answer
+VALUES	(2, 1, 'Apache'),
+		(3, 2, 'Samual Street'),
+		(5, 3, 'Cameron')
+
+
+INSERT INTO ReservationStatus
+VALUES ('Active', 'Reservation is current and still valid'),
+	   ('Cancelled', 'Previous reservation has been cancelled'),
+	   ('Hold', 'Reservation is currently on hold due to an issue')
+
+
+INSERT INTO Reservation
+VALUES	('07-05-2021', '07-19-2021', '05-14-2021', 2, 3, '458 B43', 0, 23, 0, 0, 1, 1, 0, 0),
+		('09-10-2021', '09-24-2021', '02-23-2021', 2, 0, '7TYP290', 1, 40, 1, 1, 1, 2, 1, 1),
+		('10-02-2021', '10-23-2021', '07-10-2021', 2, 0, 'CD 80519', 2, 32, 0, 1, 1, 3, 2, 2)
+
+
+INSERT INTO PaymentType
+VALUES	('Credit'),
+		('Debit'),
+		('Cash')
+
+INSERT INTO Payment
+VALUES (132.78, '05-14-2021', 'Reservation payment.', 1, 1),
+	   (156.34, '02-23-2021', 'Reservation payment.', 2, 2),
+	   (127.42, '07-10-2021', 'Reservation payment.', 3, 3)
+
