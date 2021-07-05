@@ -400,7 +400,6 @@ VALUES	('07-05-2021', '07-19-2021', '05-14-2021', 2, 3, '458 B43', 0, 23, 0, 0, 
 		('09-10-2021', '09-24-2021', '02-23-2021', 2, 0, '7TYP290', 1, 40, 1, 1, 1, 2, 1, 1),
 		('10-02-2021', '10-23-2021', '07-10-2021', 2, 0, 'CD 80519', 2, 32, 0, 1, 1, 3, 2, 2)
 
-
 INSERT INTO PaymentType
 VALUES	('Credit'),
 		('Debit'),
@@ -411,3 +410,27 @@ VALUES (132.78, '05-14-2021', 'Reservation payment.', 1, 1),
 	   (156.34, '02-23-2021', 'Reservation payment.', 2, 2),
 	   (127.42, '07-10-2021', 'Reservation payment.', 3, 3)
 
+INSERT INTO SpecialEvent
+VALUES ('Christmas','12-25-2021', '12-26-2021', 1),
+	   ('New Years', '12-31-2021', '1-1-2022', 2),
+	   ('Birthday', '7-14-2021', '7-18-2021', 1)
+
+INSERT INTO Location
+VALUES ('Yellowstone', '121 Hwy. 89 South', 59030, 'Gardiner', 'Montana'),
+	   ('Grand Teton', '100 Colter Bay Campground Road', 83013, 'Moran', 'Wyoming'),
+	   ('Bear Lake', '2201 N Bear Lake Blvd', 84028, 'Garden City', 'Utah')
+
+INSERT INTO Lot
+VALUES ('Large', 150, 1, 2),
+	   ('Bear', 120, 2, 1),
+	   ('Lake View', 100, 3, 3)
+
+INSERT INTO LotCategory
+VALUES ('Large', 1),
+	   ('Medium', 2),
+	   ('Small' , 3)
+
+INSERT INTO RateCategory
+VALUES (55, '07-01-2021', '7-31-2021'),
+	   (45, '07-01-2021', '7-31-2021'),
+	   (35, '07-01-2021', '7-31-2021')
