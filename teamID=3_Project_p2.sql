@@ -18,7 +18,6 @@ ON PRIMARY
 	MAXSIZE = 500MB,
 	FILEGROWTH = 10%
 )
-
 LOG ON 
 (
 	NAME = 'RVPark_Log',
@@ -148,8 +147,8 @@ rateEndDate		dateTime		NOT NULL
 
 CREATE TABLE ReservationStatus(
 reservationStatusID			tinyInt			NOT NULL	IDENTITY,
-statusName			varChar(15)		NOT NULL,
-statusDescription	varChar(max)	NOT NULL	
+statusName					varChar(15)		NOT NULL,
+statusDescription			varChar(max)	NOT NULL	
 )
 
 CREATE TABLE VehicleType(
@@ -279,32 +278,32 @@ ALTER TABLE Payment
 	ADD CONSTRAINT FK_paymentTypeID
 	FOREIGN KEY (paymentTypeID) REFERENCES PaymentType (typeID)
 	ON UPDATE CASCADE
-	ON DELETE NO ACTION
+	ON DELETE CASCADE
 
 
 ALTER TABLE Reservation
 	ADD CONSTRAINT FK_reservationStatusID
 	FOREIGN KEY (reservationStatusID) REFERENCES ReservationStatus (reservationStatusID)
 	ON UPDATE CASCADE
-	ON DELETE NO ACTION
+	ON DELETE CASCADE
 
 ALTER TABLE Reservation
 	ADD CONSTRAINT FK_lotID
 	FOREIGN KEY (lotID) REFERENCES Lot (lotID)
 	ON UPDATE CASCADE
-	ON DELETE NO ACTION
+	ON DELETE CASCADE
 
 ALTER TABLE Reservation
 	ADD CONSTRAINT FK_primaryResidentID
 	FOREIGN KEY (primaryResidentID) REFERENCES Resident (residentID)
 	ON UPDATE CASCADE
-	ON DELETE NO ACTION
+	ON DELETE CASCADE
 
 ALTER TABLE Reservation
 	ADD CONSTRAINT FK_vehicleID
 	FOREIGN KEY (vehicleID) REFERENCES VehicleType (vehicleID)
 	ON UPDATE CASCADE
-	ON DELETE NO ACTION
+	ON DELETE CASCADE
 
 
 
@@ -355,7 +354,32 @@ VALUES	('Mark', 'Lee', '801-598-1814', 'marklee@gmail.com', 'markflee', 'X&90g3w
 		('Jenna', 'Valencia', '435-468-1896', 'jennaval@yahoo.com', 'jvalencia', '8ok*q1VA70BOw@Haw-ah', 1, 1),
 		('Leonie', 'Guerrero', '801-789-1567', 'liongorilla1559@gmail.com', 'leoniegue', '_8_zlrLXOspus', 1, 6)
 
+
 INSERT INTO Answer
 VALUES	(2, 1, 'Apache'),
 		(3, 2, 'Samual Street'),
 		(5, 3, 'Cameron')
+
+
+INSERT INTO ReservationStatus
+VALUES ('Active', 'Reservation is current and still valid'),
+	   ('Cancelled', 'Previous reservation has been cancelled'),
+	   ('Hold', 'Reservation is currently on hold due to an issue')
+
+
+INSERT INTO Reservation
+VALUES	('07-05-2021', '07-19-2021', '05-14-2021', 2, 3, '458 B43', 0, 23, 0, 0, 1, 1, 0, 0),
+		('09-10-2021', '09-24-2021', '02-23-2021', 2, 0, '7TYP290', 1, 40, 1, 1, 1, 2, 1, 1),
+		('10-02-2021', '10-23-2021', '07-10-2021', 2, 0, 'CD 80519', 2, 32, 0, 1, 1, 3, 2, 2)
+
+
+INSERT INTO PaymentType
+VALUES	('Credit'),
+		('Debit'),
+		('Cash')
+
+INSERT INTO Payment
+VALUES (132.78, '05-14-2021', 'Reservation payment.', 1, 1),
+	   (156.34, '02-23-2021', 'Reservation payment.', 2, 2),
+	   (127.42, '07-10-2021', 'Reservation payment.', 3, 3)
+
