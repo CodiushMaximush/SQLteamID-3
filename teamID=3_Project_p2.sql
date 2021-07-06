@@ -423,7 +423,7 @@ VALUES ('Yellowstone', '121 Hwy. 89 South', 59030, 'Gardiner', 'Montana'),
 INSERT INTO Lot
 VALUES ('Large', 150, 1, 2),
 	   ('Bear', 120, 2, 1),
-	   ('Lake View', 100, 3, 3)
+	   ('Lake', 100, 3, 3)
 
 INSERT INTO LotCategory
 VALUES ('Large', 1),
