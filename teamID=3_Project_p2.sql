@@ -434,3 +434,8 @@ INSERT INTO RateCategory
 VALUES (55, '07-01-2021', '7-31-2021'),
 	   (45, '07-01-2021', '7-31-2021'),
 	   (35, '07-01-2021', '7-31-2021')
+
+INSERT INTO VehicleType
+VALUES ('2019 Ford F-150'),
+	   ('2021 Chevy Silverado'),
+	   ('2020 Ram 3500')
