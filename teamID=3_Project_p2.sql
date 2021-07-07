@@ -39,7 +39,7 @@ statusDesc		varchar(50)	NOT NULL
 CREATE TABLE SecurityQuestion
 (
 questionID		tinyint		NOT NULL	IDENTITY,
-question		varchar(50)	NOT NULL
+securityQuestion		varchar(50)	NOT NULL
 )
 
 CREATE TABLE DODAffiliation
@@ -48,11 +48,11 @@ DODaffID		tinyint		NOT NULL	IDENTITY,
 affiliationDesc	varchar(50)	NOT NULL
 )
 
-CREATE TABLE Answer
+CREATE TABLE SecurityAnswer
 (
 questionID		tinyint		NOT NULL,
 residentID		int			NOT NULL,
-answer			varchar(20)	NOT NULL
+securityAnswer			varchar(20)	NOT NULL
 )
 
 CREATE TABLE Resident
@@ -87,8 +87,8 @@ typeName		varchar(15)	NOT NULL
 CREATE TABLE Reservation
 (
 reservationID		int			NOT NULL	IDENTITY,
-startDate			datetime	NOT NULL,
-endDate				datetime	NOT NULL,
+resStartDate			datetime	NOT NULL,
+resEndDate				datetime	NOT NULL,
 reservationDate		datetime	NOT NULL,
 numAdults			tinyint		NOT NULL,
 numChildren			tinyint		NOT NULL,
@@ -152,7 +152,7 @@ statusDescription			varChar(max)	NOT NULL
 )
 
 CREATE TABLE VehicleType(
-vehicleID			int				NOT NULL	IDENTITY,
+vehicleTypeID			int				NOT NULL	IDENTITY,
 vehicleDescription  varChar(50)		NOT NULL
 )
 
@@ -251,7 +251,7 @@ ALTER TABLE VehicleType
 
 --Add Foreign Key Constraints
 
-ALTER TABLE Answer
+ALTER TABLE SecurityAnswer
 	ADD CONSTRAINT FK_questionID
 	FOREIGN KEY (questionID) REFERENCES SecurityQuestion (questionID)
 	ON UPDATE CASCADE
