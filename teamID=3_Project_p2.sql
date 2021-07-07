@@ -52,7 +52,7 @@ CREATE TABLE SecurityAnswer
 (
 questionID		tinyint		NOT NULL,
 residentID		int			NOT NULL,
-securityAnswer			varchar(20)	NOT NULL
+securityAnswer	varchar(20)	NOT NULL
 )
 
 CREATE TABLE Resident
@@ -87,8 +87,8 @@ typeName		varchar(15)	NOT NULL
 CREATE TABLE Reservation
 (
 reservationID		int			NOT NULL	IDENTITY,
-resStartDate			datetime	NOT NULL,
-resEndDate				datetime	NOT NULL,
+resStartDate		datetime	NOT NULL,
+resEndDate			datetime	NOT NULL,
 reservationDate		datetime	NOT NULL,
 numAdults			tinyint		NOT NULL,
 numChildren			tinyint		NOT NULL,
@@ -100,7 +100,7 @@ numPets				tinyint		NOT NULL,
 reservationStatusID	tinyint		NOT NULL,
 lotID				tinyint		NOT NULL,
 primaryResidentID	int			NOT NULL,
-vehicleID			int			NOT NULL
+vehicleTypeID		int			NOT NULL
 )
 
 CREATE TABLE SpecialEvent
@@ -127,8 +127,7 @@ CREATE TABLE Lot
 lotID		tinyint			NOT NULL	IDENTITY,
 lotName		varChar(5)		NOT NULL,
 lotLength	tinyint			NOT NULL,
-categoryID	tinyint			NOT NULL,
-locId		tinyint			NOT NULL,
+categoryID	tinyint			NOT NULL
 )
 
 CREATE TABLE LotCategory
@@ -142,7 +141,8 @@ CREATE TABLE RateCategory(
 rateID			tinyInt			NOT NULL	IDENTITY,
 rate			smallMoney		NOT NULL,
 rateStartDate	dateTime		NOT NULL, 
-rateEndDate		dateTime		NOT NULL
+rateEndDate		dateTime		NOT NULL,
+locID			tinyint			NOT NULL
 )
 
 CREATE TABLE ReservationStatus(
@@ -153,7 +153,7 @@ statusDescription			varChar(max)	NOT NULL
 
 CREATE TABLE VehicleType(
 vehicleTypeID			int				NOT NULL	IDENTITY,
-vehicleDescription  varChar(50)		NOT NULL
+vehicleDescription		varChar(50)		NOT NULL
 )
 
 --CONSTRAINTS BELOW HERE
@@ -192,10 +192,6 @@ ALTER TABLE Resident
 	ADD CONSTRAINT PK_residentID
 	PRIMARY KEY (residentID)
 
-ALTER TABLE Answer
-	ADD CONSTRAINT PK_answer
-	PRIMARY KEY (questionID, residentID)
-
 ALTER TABLE RateCategory
 	ADD CONSTRAINT PK_rateCategory 
 	PRIMARY KEY(rateID)
@@ -204,34 +200,10 @@ ALTER TABLE ReservationStatus
 	ADD CONSTRAINT PK_reservationStatus 
 	PRIMARY KEY(reservationStatusID)
 
-ALTER TABLE SpecialEvent
-	ADD CONSTRAINT FK_locID
-	FOREIGN KEY (locID) REFERENCES Location (locID)
-	ON UPDATE CASCADE
-	ON DELETE CASCADE
-
-ALTER TABLE LotCategory
-	ADD CONSTRAINT FK_rateID
-	FOREIGN KEY (rateID) REFERENCES RateCategory (rateID)
-	ON UPDATE CASCADE
-	ON DELETE CASCADE
-
-ALTER TABLE Lot
-	ADD CONSTRAINT FK_categoryID
-	FOREIGN KEY (categoryID) REFERENCES LotCategory (categoryID)
-	ON UPDATE CASCADE
-	ON DELETE CASCADE
-
-ALTER TABLE Lot
-	ADD CONSTRAINT FK_locID
-	FOREIGN KEY (locID)	REFERENCES Location (locID)
-	ON UPDATE CASCADE
-	ON DELETE CASCADE
-
-ALTER TABLE Answer
+ALTER TABLE SecurityAnswer
 	ADD CONSTRAINT PK_questionID_residentID
 	PRIMARY KEY (questionID, residentID)
-=======
+
 ALTER TABLE PaymentType
 	ADD CONSTRAINT PK_typeID
 	PRIMARY KEY (typeID)
@@ -246,7 +218,7 @@ ALTER TABLE Reservation
 
 ALTER TABLE VehicleType
 	ADD CONSTRAINT  PK_vehicleID
-	PRIMARY KEY (vehicleID)
+	PRIMARY KEY (vehicleTypeID)
 
 
 --Add Foreign Key Constraints
@@ -257,7 +229,7 @@ ALTER TABLE SecurityAnswer
 	ON UPDATE CASCADE
 	ON DELETE CASCADE
 
-ALTER TABLE Answer
+ALTER TABLE SecurityAnswer
 	ADD CONSTRAINT FK_residentID
 	FOREIGN KEY (residentID) REFERENCES Resident (residentID)
 	ON UPDATE CASCADE
@@ -269,6 +241,7 @@ ALTER TABLE SpecialEvent
 	ON UPDATE CASCADE
 	ON DELETE CASCADE
 
+
 ALTER TABLE LotCategory
 	ADD CONSTRAINT FK_rateID
 	FOREIGN KEY (rateID) REFERENCES RateCategory (rateID)
@@ -278,12 +251,6 @@ ALTER TABLE LotCategory
 ALTER TABLE Lot
 	ADD CONSTRAINT FK_categoryID
 	FOREIGN KEY (categoryID) REFERENCES LotCategory (categoryID)
-	ON UPDATE CASCADE
-	ON DELETE CASCADE
-
-ALTER TABLE Lot
-	ADD CONSTRAINT FK_locID
-	FOREIGN KEY (locID) REFERENCES Location (locID)
 	ON UPDATE CASCADE
 	ON DELETE CASCADE
 
@@ -299,15 +266,17 @@ ALTER TABLE Resident
 	ON UPDATE CASCADE
 	ON DELETE CASCADE
 
-
-
-
 ALTER TABLE Payment
 	ADD CONSTRAINT FK_paymentTypeID
 	FOREIGN KEY (paymentTypeID) REFERENCES PaymentType (typeID)
 	ON UPDATE CASCADE
 	ON DELETE CASCADE
 
+ALTER TABLE RateCategory
+	ADD CONSTRAINT FK_locID
+	FOREIGN KEY (locID) REFERENCES Location (locID)
+	ON UPDATE CASCADE
+	ON DELETE CASCADE
 
 ALTER TABLE Reservation
 	ADD CONSTRAINT FK_reservationStatusID
@@ -328,11 +297,10 @@ ALTER TABLE Reservation
 	ON DELETE CASCADE
 
 ALTER TABLE Reservation
-	ADD CONSTRAINT FK_vehicleID
-	FOREIGN KEY (vehicleID) REFERENCES VehicleType (vehicleID)
+	ADD CONSTRAINT FK_vehicleTypeID
+	FOREIGN KEY (vehicleTypeID) REFERENCES VehicleType (vehicleTypeID)
 	ON UPDATE CASCADE
 	ON DELETE CASCADE
-
 
 
 -- Add CK's
@@ -346,12 +314,9 @@ ALTER TABLE Reservation
 
 -- Add DK's
 
-
-
 ALTER TABLE Reservation
 	ADD CONSTRAINT DK_reservationDate
 	DEFAULT GETDATE() FOR reservationDate
-
 
 
 --ADD SAMPLE DATA BELOW
@@ -383,7 +348,7 @@ VALUES	('Mark', 'Lee', '801-598-1814', 'marklee@gmail.com', 'markflee', 'X&90g3w
 		('Leonie', 'Guerrero', '801-789-1567', 'liongorilla1559@gmail.com', 'leoniegue', '_8_zlrLXOspus', 1, 6)
 
 
-INSERT INTO Answer
+INSERT INTO SecurityAnswer
 VALUES	(2, 1, 'Apache'),
 		(3, 2, 'Samual Street'),
 		(5, 3, 'Cameron')
@@ -394,11 +359,38 @@ VALUES ('Active', 'Reservation is current and still valid'),
 	   ('Cancelled', 'Previous reservation has been cancelled'),
 	   ('Hold', 'Reservation is currently on hold due to an issue')
 
+INSERT INTO Location
+VALUES ('Yellowstone', '121 Hwy. 89 South', 59030, 'Gardiner', 'Montana'),
+	   ('Grand Teton', '100 Colter Bay Campground Road', 83013, 'Moran', 'Wyoming'),
+	   ('Bear Lake', '2201 N Bear Lake Blvd', 84028, 'Garden City', 'Utah')
+
+INSERT INTO RateCategory
+VALUES (55, '07-01-2021', '7-31-2021', 1),
+	   (45, '07-01-2021', '7-31-2021', 1),
+	   (35, '07-01-2021', '7-31-2021', 1)
+
+INSERT INTO LotCategory
+VALUES ('Large', 1),
+	   ('Medium', 2),
+	   ('Small' , 3)
+
+
+INSERT INTO Lot
+VALUES ('Large', 150, 1),
+	   ('Bear', 120, 2),
+	   ('Lake', 100, 3)
+
+
+INSERT INTO VehicleType
+VALUES ('2019 Ford F-150'),
+	   ('2021 Chevy Silverado'),
+	   ('2020 Ram 3500')
+
 
 INSERT INTO Reservation
-VALUES	('07-05-2021', '07-19-2021', '05-14-2021', 2, 3, '458 B43', 0, 23, 0, 0, 1, 1, 0, 0),
-		('09-10-2021', '09-24-2021', '02-23-2021', 2, 0, '7TYP290', 1, 40, 1, 1, 1, 2, 1, 1),
-		('10-02-2021', '10-23-2021', '07-10-2021', 2, 0, 'CD 80519', 2, 32, 0, 1, 1, 3, 2, 2)
+VALUES	('07-05-2021', '07-19-2021', '05-14-2021', 2, 3, '458 B43', 0, 23, 0, 0, 1, 1, 1, 1),
+		('09-10-2021', '09-24-2021', '02-23-2021', 2, 0, '7TYP290', 1, 40, 1, 1, 1, 2, 2, 2),
+		('10-02-2021', '10-23-2021', '07-10-2021', 2, 0, 'CD 80519', 2, 32, 0, 1, 1, 3, 3, 3)
 
 INSERT INTO PaymentType
 VALUES	('Credit'),
@@ -414,28 +406,3 @@ INSERT INTO SpecialEvent
 VALUES ('Christmas','12-25-2021', '12-26-2021', 1),
 	   ('New Years', '12-31-2021', '1-1-2022', 2),
 	   ('Birthday', '7-14-2021', '7-18-2021', 1)
-
-INSERT INTO Location
-VALUES ('Yellowstone', '121 Hwy. 89 South', 59030, 'Gardiner', 'Montana'),
-	   ('Grand Teton', '100 Colter Bay Campground Road', 83013, 'Moran', 'Wyoming'),
-	   ('Bear Lake', '2201 N Bear Lake Blvd', 84028, 'Garden City', 'Utah')
-
-INSERT INTO Lot
-VALUES ('Large', 150, 1, 2),
-	   ('Bear', 120, 2, 1),
-	   ('Lake', 100, 3, 3)
-
-INSERT INTO LotCategory
-VALUES ('Large', 1),
-	   ('Medium', 2),
-	   ('Small' , 3)
-
-INSERT INTO RateCategory
-VALUES (55, '07-01-2021', '7-31-2021'),
-	   (45, '07-01-2021', '7-31-2021'),
-	   (35, '07-01-2021', '7-31-2021')
-
-INSERT INTO VehicleType
-VALUES ('2019 Ford F-150'),
-	   ('2021 Chevy Silverado'),
-	   ('2020 Ram 3500')
