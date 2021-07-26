@@ -1,6 +1,30 @@
 USE RVPark
 
 --Stored Procedures (5 needed)
+-- SP #1
+GO
+CREATE PROC sp_cancel_reservation
+@reservationID int,
+@refund money OUTPUT
+AS
+BEGIN
+	-- Calculate reservation fees
+	SET @refund = (SELECT amountPaid FROM Payment p JOIN Reservation r ON p.reservationID = r.reservationID WHERE p.reservationID = @reservationID)
+	DECLARE @startDate date
+	SET @startDate = (SELECT resStartDate FROM Reservation r WHERE reservationID = @reservationID)
+	SELECT @refund = CASE
+						WHEN DATEDIFF(DAY, @startDate, GETDATE()) > 7 THEN (@refund - 5.00)
+						WHEN (DATEDIFF(DAY, @startDate, GETDATE())>= 3) AND (DATEDIFF(DAY, @startDate, GETDATE()) <= 6) THEN (@refund - 10.00)
+						WHEN (DATEDIFF(DAY, @startDate, GETDATE()) >= 1) AND (DATEDIFF(DAY, @startDate, GETDATE()) <= 2) THEN (@refund - 20)
+						-- WHEN SPECIAL EVENT ????
+						ELSE @refund
+						END
+	-- Remove reservation from reservation table
+	DELETE FROM Reservation WHERE reservationID = @reservationID;
+END
+GO
+
+
 GO--This Stored Procedure is used to update any fees
 CREATE PROC sp_update_reservation_fee
 @reservationID	int,
@@ -13,6 +37,21 @@ BEGIN
 END
 
 --User Defined Functions (5 needed)
+-- UDF #5
+GO
+CREATE FUNCTION fn_get_reservations (
+@startDate date,
+@endDate date
+)
+RETURNS TABLE
+AS
+RETURN
+	SELECT * FROM Reservation r
+		WHERE (r.resStartDate BETWEEN @startDate AND @endDate) AND (r.resEndDate BETWEEN @startDate AND @endDate)
+GO
+
+
+
 GO--This function returns the active campsites during a given timeframe. 
 CREATE FUNCTION fn_active_campsite (
 @beginDate	date,
@@ -41,7 +80,27 @@ BEGIN
 		END
 	END
 
-
+-- TR #3
+GO
+CREATE TRIGGER tr_reservation_limit ON Reservation
+AFTER INSERT, UPDATE AS
+BEGIN
+	-- If reservation is bewteen October 15th and April 15th, then limit reservations to 15 days, otherwise don't.
+	IF EXISTS (SELECT * FROM inserted i WHERE
+										((MONTH(i.resStartDate) BETWEEN 11 AND 12) 
+										OR (MONTH(i.resStartDate) BETWEEN 1 AND 3) -- dates between november and march, no specific dates 
+										OR (MONTH(i.resStartDate) = 10 AND DAY(i.resStartDate) >= 15) 
+										OR (MONTH(i.resStartDate) = 4 AND DAY(i.resStartDate) <= 15)) 
+										AND ((MONTH(i.resEndDate) BETWEEN 11 AND 12) 
+										OR (MONTH(i.resEndDate) BETWEEN 1 AND 3) -- dates between november and march, no specific dates 
+										OR (MONTH(i.resEndDate) = 10 AND DAY(i.resEndDate) >= 15) 
+										OR (MONTH(i.resEndDate) = 4 AND DAY(i.resEndDate) <= 15)
+										))
+		BEGIN
+			RAISERROR ('Reservation limited to 15 days beteen Oct 15th and April 15th', 16, 1)
+			ROLLBACK
+		END
+END
 
 
 --Non-Clustered Indexes (2 needed)
