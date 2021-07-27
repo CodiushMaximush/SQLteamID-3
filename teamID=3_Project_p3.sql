@@ -45,7 +45,14 @@ BEGIN
 END
 
 --User Defined Functions (5 needed)
+
+
+
+GO
 -- UDF #5
+GO
+IF object_id(N'fn_get_reservations', N'FN') IS NOT NULL
+    DROP FUNCTION fn_get_reservations
 GO
 CREATE FUNCTION fn_get_reservations (
 @startDate date,
@@ -58,6 +65,23 @@ RETURN
 		WHERE (r.resStartDate BETWEEN @startDate AND @endDate) AND (r.resEndDate BETWEEN @startDate AND @endDate)
 GO
 
+
+/*fn_get_empty_lots. A function that takes a date range and returns lots that are empty in that
+date range. Could be nested within the new reservation function.*/
+GO
+IF object_id(N'fn_get_empty_lots', N'FN') IS NOT NULL
+    DROP FUNCTION fn_get_empty_lots
+GO
+CREATE FUNCTION fn_get_empty_lots(@startDate date, @endDate date)
+RETURNS TABLE
+AS
+RETURN
+
+SELECT Lot.lotName, Lot.lotLength,  LotCategory.catName 
+FROM LOT 
+	JOIN LotCategory 
+		ON Lot.categoryID = LotCategory.categoryID		
+WHERE NOT EXISTS ( SELECT * FROM fn_get_reservations(@startDate, @endDate) as reservations WHERE reservations.lotID = Lot.lotID )
 
 
 GO--This function returns the active campsites during a given timeframe. 
