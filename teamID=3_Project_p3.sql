@@ -1,7 +1,10 @@
 USE RVPark
-
---Stored Procedures (5 needed)
--- SP #1 (Austin Wagstaff)
+-------------------
+--Stored Procedures
+-------------------
+-- SP #1
+IF EXISTS(SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE SPECIFIC_NAME = 'sp_cancel_reservation')
+	DROP PROCEDURE sp_cancel_reservation;
 GO
 CREATE PROC sp_cancel_reservation
 @reservationID int,
@@ -31,6 +34,7 @@ BEGIN
 	DELETE FROM Reservation WHERE reservationID = @reservationID;
 END
 GO
+-- SP #2
 /*(Cody)Sp_reset_security_answers: Accepts a resident id and clears their security answers from the
 database so they can be reinserted*/
 IF OBJECT_ID('sp_reset_security_answers', 'P') IS NOT NULL
@@ -42,7 +46,7 @@ AS
 BEGIN
 DELETE FROM SecurityAnswer WHERE SecurityAnswer.residentID = @residentID
 END
-
+-- SP #3
 --This Stored Procedure is used to update any fees
 GO
 CREATE PROC sp_update_reservation_fee
@@ -54,13 +58,34 @@ BEGIN
 	SET amountPaid = @fee
 	WHERE reservationID = @reservationID
 END
+-- SP #4
+--(Austin West) Accepts a payment id then adds another payment with the same amount but negative and changing the comments to 'refund'
+IF EXISTS(SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE SPECIFIC_NAME = 'sp_refund_payment')
+	DROP PROCEDURE sp_refund_payment;
+GO
+CREATE PROCEDURE sp_refund_payment
+	@paymentid	int
+AS 
+BEGIN
+	DECLARE @amountPaid money, @reservationID int, @paymentTypeID int
+	SET @amountPaid = (SELECT amountPaid FROM Payment WHERE paymentID = @paymentid)
+	SET @reservationID = (SELECT reservationID FROM Payment WHERE paymentID = @paymentid)
+	SET @paymentTypeID = (SELECT paymentTypeID FROM Payment WHERE paymentID = @paymentid)
 
---User Defined Functions (5 needed)
+	INSERT INTO Payment VALUES ((@amountPaid * -1), GETDATE(), 'Refund Reservation', @paymentTypeID, @reservationID)
+END
+GO
+
+-- SP #5 (still needed)
 
 
+
+------------------------
+--User Defined Functions
+------------------------
 
 GO
--- UDF #5 (Austin Wagstaff)
+-- UDF #1
 GO
 IF object_id(N'fn_get_reservations', N'FN') IS NOT NULL
     DROP FUNCTION fn_get_reservations
@@ -76,7 +101,7 @@ RETURN
 		WHERE (r.resStartDate BETWEEN @startDate AND @endDate) AND (r.resEndDate BETWEEN @startDate AND @endDate)
 GO
 
-
+-- UDF #2
 /*fn_get_empty_lots. A function that takes a date range and returns lots that are empty in that
 date range. Could be nested within the new reservation function.*/
 GO
@@ -95,7 +120,9 @@ FROM LOT
 WHERE NOT EXISTS ( SELECT * FROM fn_get_reservations(@startDate, @endDate) as reservations WHERE reservations.lotID = Lot.lotID )
 
 
-GO--This function returns the active campsites during a given timeframe. 
+GO
+-- UDF #3
+--This function returns the active campsites during a given timeframe. 
 CREATE FUNCTION fn_active_campsite (
 @beginDate	date,
 @endDate	date)
@@ -108,9 +135,36 @@ RETURN
 		INNER JOIN Lot AS l ON r.lotID = l.lotID
 		WHERE r.resStartDate BETWEEN @beginDate AND @endDate AND r.resEndDate BETWEEN @beginDate AND @endDate
 
+GO
+-- UDF #4
+-- (Austin West) Accepts an input of DODAffiliationID and returns a table containing residents with that affiliation
+IF EXISTS (SELECT * FROM sys.objects WHERE 
+object_id = OBJECT_ID('dbo.fn_affiliation_stats') 
+AND type in (N'FN', N'IF',N'TF', N'FS', N'FT'))
+DROP FUNCTION dbo.fn_affiliation_stats;
+GO
+CREATE FUNCTION dbo.fn_affiliation_stats
+(
+@affiliationID		int
+) 
+RETURNS TABLE
+AS 
+RETURN
+	(SELECT affiliationDesc, firstname, lastname, ResidentID, phone, email, serviceStatusID FROM DODAffiliation d
+	JOIN Resident r on d.DODaffID = r.DODaffID
+	WHERE r.DODaffID = @affiliationID)
+GO
 
---Triggers (5 needed)
-GO--On an update or insert, this will check for any reservation conflicts
+-- UDF #5 (still needed)
+
+
+
+----------
+--Triggers
+----------
+GO
+-- Trigger #1
+--On an update or insert, this will check for any reservation conflicts
 CREATE TRIGGER Tr_check_reservation ON Reservation
 AFTER INSERT, UPDATE AS
 BEGIN
@@ -123,7 +177,7 @@ BEGIN
 		END
 	END
 
--- TR #3 (Austin Wagstaff)
+-- TR #2
 GO
 CREATE TRIGGER tr_reservation_limit ON Reservation
 AFTER INSERT, UPDATE AS
@@ -150,6 +204,7 @@ BEGIN
 		END
 END
 
+-- Trigger #3
 /*After Insert on special events calls a stored procedure that uses a
 cursor to crawl through reservations that fall within the date range of a newly added event and
 adds a processing fee to the reservation.*/
@@ -194,30 +249,49 @@ FETCH NEXT FROM cursor_add_special_event INTO @startDate, @endDate
 END
 END
 
+-- Trigger #4
+-- (Austin West) Insert/Update trigger that listens for updates to Reservation and identifies when a reservation has been made during a special event period
+GO
+DROP TRIGGER IF EXISTS dbo.tr_check_specialevent
+GO
+CREATE TRIGGER tr_check_specialevent ON Reservation
+AFTER INSERT, UPDATE
+AS
+DECLARE @reservationStartDate datetime, @reservationEndDate datetime
+SET @reservationStartDate = (SELECT resStartDate FROM inserted)
+SET @reservationEndDate = (SELECT resEndDate FROM inserted)
+-- handle invalid reservation startDate
+IF EXISTS (select 1 from SpecialEvent where @reservationStartDate between eventStartDate and eventEndDate)
+BEGIN
+	RAISERROR ('This date range falls into a special event date range. Special event rate may apply. Another procedure could be called here to handle this event.',10,1,999)
+	ROLLBACK 
+END
+-- handle invalid reservation endDate
+IF EXISTS (select 1 from SpecialEvent where @reservationEndDate between eventStartDate and eventEndDate)
+BEGIN
+	RAISERROR ('This date range falls into a special event date range. Special event rate may apply. Another procedure could be called here to handle this event.',10,1,999)
+	ROLLBACK 
+END
 
---Non-Clustered Indexes (2 needed)
-GO--This index will be used to count the number of reservation a give day has.
+
+--Trigger #5 (still needed)
+
+
+-----------------------
+--Non-Clustered Indexes
+-----------------------
+GO
+-- Index #1
+--This index will be used to count the number of reservation a give day has.
 CREATE NONCLUSTERED INDEX ix_reservation_dates
 	ON Reservation (resStartDate)
 GO
+-- Index #2
 CREATE NONCLUSTERED INDEX ix_resident_affiliation
 	ON Resident (DODaffID)
 GO
---Cursor (1 needed)
 
-
-
--- TEST CASES
--- Austin Wagstaff
--- tr_reservation_limit
-INSERT INTO Reservation VALUES ('12-05-2021', '12-25-2021', '05-14-2021', 2, 3, '653 A4C', 0, 23, 0, 0, 1, 1, 1, 1)
-SELECT DATEDIFF(DAY, '11-05-2021', '11-10-2021')
-
--- fn_get_reservations
-SELECT * FROM dbo.fn_get_reservations('07-05-2021', '09-24-2021')
--- sp_cancel_reservation
-DECLARE @refundAmount money -- declare variable to store output
-EXEC sp_cancel_reservation
-	@reservationID = 2,
-	@refund = @refundAmount OUTPUT
-PRINT 'Refund  ' + CAST(@refundAmount as varchar(10)) -- printing empcount
+--------
+--Cursor 
+--------
+--Defined above in Trigger #3
