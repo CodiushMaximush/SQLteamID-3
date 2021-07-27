@@ -31,7 +31,17 @@ BEGIN
 	DELETE FROM Reservation WHERE reservationID = @reservationID;
 END
 GO
-
+/*(Cody)Sp_reset_security_answers: Accepts a resident id and clears their security answers from the
+database so they can be reinserted*/
+IF OBJECT_ID('sp_reset_security_answers', 'P') IS NOT NULL
+DROP PROC sp_reset_security_answers
+GO
+CREATE PROC sp_reset_security_answers
+@residentID int
+AS
+BEGIN
+DELETE FROM SecurityAnswer WHERE SecurityAnswer.residentID = @residentID
+END
 
 GO--This Stored Procedure is used to update any fees
 CREATE PROC sp_update_reservation_fee
@@ -133,6 +143,7 @@ BEGIN
 			ROLLBACK
 		END
 END
+
 
 
 --Non-Clustered Indexes (2 needed)
