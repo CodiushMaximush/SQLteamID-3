@@ -43,7 +43,8 @@ BEGIN
 DELETE FROM SecurityAnswer WHERE SecurityAnswer.residentID = @residentID
 END
 
-GO--This Stored Procedure is used to update any fees
+--This Stored Procedure is used to update any fees
+GO
 CREATE PROC sp_update_reservation_fee
 @reservationID	int,
 @fee			decimal(15,2)
@@ -144,6 +145,49 @@ BEGIN
 		END
 END
 
+/*After Insert on special events calls a stored procedure that uses a
+cursor to crawl through reservations that fall within the date range of a newly added event and
+adds a processing fee to the reservation.*/
+GO
+IF (OBJECT_ID(N'tr_add_special_event') IS NOT NULL)
+BEGIN
+      DROP TRIGGER tr_add_special_event;
+END
+GO
+CREATE TRIGGER tr_add_special_event ON SpecialEvent
+AFTER INSERT AS
+BEGIN
+/*Cursor_add_special_event: used by a trigger to crawl through new events row by row to
+update fees.*/
+
+
+DECLARE @startDate date
+DECLARE @endDate date
+
+DECLARE cursor_add_special_event CURSOR
+FOR SELECT eventStartDate, eventEndDate FROM INSERTED
+OPEN cursor_add_special_event
+
+FETCH NEXT FROM cursor_add_special_event INTO @startDate, @endDate
+WHILE @@FETCH_STATUS = 0
+BEGIN
+
+	DECLARE cursor_affected_reservations CURSOR
+	FOR SELECT reservationID FROM Reservation WHERE reservationDate BETWEEN @startDate AND @endDate
+	OPEN cursor_affected_reservations
+
+	DECLARE @resID int
+	FETCH NEXT FROM cursor_affected_reservations INTO  @resID
+	WHILE @@FETCH_STATUS = 0
+	BEGIN
+		INSERT INTO Payment (amountPaid, datePaid, paymentReason, paymentTypeID, reservationID) 
+		VALUES (20.00, GETDATE(), 'Special Event Fee', 1, @resID)
+		FETCH NEXT FROM cursor_affected_reservations INTO @resID
+	END
+
+FETCH NEXT FROM cursor_add_special_event INTO @startDate, @endDate
+END
+END
 
 
 --Non-Clustered Indexes (2 needed)
