@@ -1,7 +1,7 @@
 USE RVPark
 
 --Stored Procedures (5 needed)
--- SP #1
+-- SP #1 (Austin Wagstaff)
 GO
 CREATE PROC sp_cancel_reservation
 @reservationID int,
@@ -60,7 +60,7 @@ END
 
 
 GO
--- UDF #5
+-- UDF #5 (Austin Wagstaff)
 GO
 IF object_id(N'fn_get_reservations', N'FN') IS NOT NULL
     DROP FUNCTION fn_get_reservations
@@ -123,23 +123,28 @@ BEGIN
 		END
 	END
 
--- TR #3
+-- TR #3 (Austin Wagstaff)
 GO
 CREATE TRIGGER tr_reservation_limit ON Reservation
 AFTER INSERT, UPDATE AS
 BEGIN
 	-- If reservation is bewteen October 15th and April 15th, then limit reservations to 15 days, otherwise don't.
 	IF EXISTS (SELECT * FROM inserted i WHERE
-										((MONTH(i.resStartDate) BETWEEN 11 AND 12) 
-										OR (MONTH(i.resStartDate) BETWEEN 1 AND 3) -- dates between november and march, no specific dates 
-										OR (MONTH(i.resStartDate) = 10 AND DAY(i.resStartDate) >= 15) 
-										OR (MONTH(i.resStartDate) = 4 AND DAY(i.resStartDate) <= 15)) 
-										AND ((MONTH(i.resEndDate) BETWEEN 11 AND 12) 
+										((
+											(MONTH(i.resStartDate) BETWEEN 11 AND 12) 
+										OR  (MONTH(i.resStartDate) BETWEEN 1 AND 3) -- dates between november and march, no specific dates 
+										OR  (MONTH(i.resStartDate) = 10 AND DAY(i.resStartDate) >= 15) 
+										OR  (MONTH(i.resStartDate) = 4  AND DAY(i.resStartDate) <= 15)
+										) 
+										AND (
+										   (MONTH(i.resEndDate) BETWEEN 11 AND 12) 
 										OR (MONTH(i.resEndDate) BETWEEN 1 AND 3) -- dates between november and march, no specific dates 
 										OR (MONTH(i.resEndDate) = 10 AND DAY(i.resEndDate) >= 15) 
 										OR (MONTH(i.resEndDate) = 4 AND DAY(i.resEndDate) <= 15)
-										))
+										    ) AND DATEDIFF(DAY,i.resStartDate, i.resEndDate) > 15)
+										)
 		BEGIN
+			SELECT * FROM inserted i
 			RAISERROR ('Reservation limited to 15 days beteen Oct 15th and April 15th', 16, 1)
 			ROLLBACK
 		END
@@ -200,3 +205,19 @@ CREATE NONCLUSTERED INDEX ix_resident_affiliation
 GO
 --Cursor (1 needed)
 
+
+
+-- TEST CASES
+-- Austin Wagstaff
+-- tr_reservation_limit
+INSERT INTO Reservation VALUES ('12-05-2021', '12-25-2021', '05-14-2021', 2, 3, '653 A4C', 0, 23, 0, 0, 1, 1, 1, 1)
+SELECT DATEDIFF(DAY, '11-05-2021', '11-10-2021')
+
+-- fn_get_reservations
+SELECT * FROM dbo.fn_get_reservations('07-05-2021', '09-24-2021')
+-- sp_cancel_reservation
+DECLARE @refundAmount money -- declare variable to store output
+EXEC sp_cancel_reservation
+	@reservationID = 2,
+	@refund = @refundAmount OUTPUT
+PRINT 'Refund  ' + CAST(@refundAmount as varchar(10)) -- printing empcount
