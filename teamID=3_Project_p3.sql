@@ -179,6 +179,11 @@ BEGIN
 
 -- TR #2
 GO
+IF (OBJECT_ID(N'tr_reservation_limit') IS NOT NULL)
+BEGIN
+      DROP TRIGGER tr_reservation_limit;
+END
+GO
 CREATE TRIGGER tr_reservation_limit ON Reservation
 AFTER INSERT, UPDATE AS
 BEGIN
