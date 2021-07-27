@@ -16,7 +16,15 @@ BEGIN
 						WHEN DATEDIFF(DAY, @startDate, GETDATE()) > 7 THEN (@refund - 5.00)
 						WHEN (DATEDIFF(DAY, @startDate, GETDATE())>= 3) AND (DATEDIFF(DAY, @startDate, GETDATE()) <= 6) THEN (@refund - 10.00)
 						WHEN (DATEDIFF(DAY, @startDate, GETDATE()) >= 1) AND (DATEDIFF(DAY, @startDate, GETDATE()) <= 2) THEN (@refund - 20)
-						-- WHEN SPECIAL EVENT ????
+						WHEN EXISTS (SELECT * FROM Reservation r
+										JOIN Lot l ON r.lotID = l.lotID
+										JOIN LotCategory lc ON l.categoryID = lc.categoryID
+										JOIN RateCategory rc ON rc.rateID = lc.rateID
+										JOIN Location loc ON loc.locID = rc.locID
+										JOIN SpecialEvent se ON se.locID = loc.locID
+										WHERE (r.resStartDate BETWEEN se.eventStartDate AND se.eventEndDate) 
+										AND (r.resEndDate BETWEEN se.eventStartDate AND se.eventEndDate))
+										THEN (@refund - 20)
 						ELSE @refund
 						END
 	-- Remove reservation from reservation table
@@ -108,6 +116,8 @@ GO--This index will be used to count the number of reservation a give day has.
 CREATE NONCLUSTERED INDEX ix_reservation_dates
 	ON Reservation (resStartDate)
 GO
-
+CREATE NONCLUSTERED INDEX ix_resident_affiliation
+	ON Resident (DODaffID)
+GO
 --Cursor (1 needed)
 
