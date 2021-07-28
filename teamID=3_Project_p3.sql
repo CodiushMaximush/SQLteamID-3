@@ -76,8 +76,27 @@ BEGIN
 END
 GO
 
--- SP #5 (still needed)
+-- SP #5 
+--(Dylan) accepts a vehicle typeId, length, and licence plate for a reservation and updates them for when a resident changes their vehicle
+IF EXISTS(SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE SPECIFIC_NAME = 'sp_update_vehicle')
+	DROP PROCEDURE sp_update_vehicle;
+GO
+CREATE PROCEDURE sp_update_vehicle
+	@vehicleID int,
+	@reservationID int,
+	@length int,
+	@licencePlate varchar(10)
 
+AS
+BEGIN
+
+	UPDATE Reservation
+	SET vehicleTypeID = @vehicleID,
+		licensePlate = @licencePlate,
+		vehicleLength = @length
+	WHERE reservationID = @reservationID
+
+end
 
 
 ------------------------
@@ -155,7 +174,32 @@ RETURN
 	WHERE r.DODaffID = @affiliationID)
 GO
 
--- UDF #5 (still needed)
+-- UDF #5
+IF EXISTS (SELECT * FROM sys.objects WHERE 
+object_id = OBJECT_ID('dbo.fn_average_stay') 
+AND type in (N'FN', N'IF',N'TF', N'FS', N'FT'))
+DROP FUNCTION dbo.fn_average_stay;
+GO
+CREATE FUNCTION dbo.fn_average_stay (
+@month int,
+@year int
+)
+
+returns int
+
+AS
+begin
+	declare @result int
+	set @result = (select avg(datediff(day, resstartdate, resenddate))
+	from Reservation
+	where (month(resEndDate) = @month and year(resenddate) = @year) and (month(resStartDate) = @month and year(resStartDate) = @year))
+
+	return @result
+end
+
+
+
+
 
 
 
@@ -279,8 +323,19 @@ BEGIN
 END
 
 
---Trigger #5 (still needed)
-
+--Trigger #5
+GO
+DROP TRIGGER IF EXISTS dbo.tr_cancel_reservation
+GO
+CREATE TRIGGER tr_cancel_reservation ON Reservation
+AFTER DELETE
+AS
+DECLARE @reservation int
+set @reservation = (SELECT reservationID from deleted)
+BEGIN
+	EXEC sp_cancel_reservation
+	@reservationID = @reservation, @refund = 0
+END
 
 -----------------------
 --Non-Clustered Indexes
@@ -300,3 +355,5 @@ GO
 --Cursor 
 --------
 --Defined above in Trigger #3
+
+
